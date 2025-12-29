@@ -14,16 +14,19 @@ interface PdfPreviewProps {
 	hasCompiled: boolean
 	fileCount: number
 	charCount: number
+	isCollapsed: boolean
+	onToggleCollapse: () => void
 }
 
-export default function PdfPreview({ pdfUrl, status, errorMsg, hasCompiled }: PdfPreviewProps) {
+export default function PdfPreview({ pdfUrl, status, errorMsg, hasCompiled, isCollapsed, onToggleCollapse }: PdfPreviewProps) {
 	const [zoom, setZoom] = useState(100)
 	const [currentPage, setCurrentPage] = useState(1)
 	
 	const { totalPages, isRendering, canvasRef, containerRef } = usePdfRenderer({
 		pdfUrl,
 		currentPage,
-		zoom
+		zoom,
+		isCollapsed
 	})
 	
 	const handleZoomIn = () => setZoom(prev => Math.min(prev + 25, 200))
@@ -44,20 +47,26 @@ export default function PdfPreview({ pdfUrl, status, errorMsg, hasCompiled }: Pd
 				onZoomIn={handleZoomIn}
 				onZoomOut={handleZoomOut}
 				onZoomFit={handleZoomFit}
+				isCollapsed={isCollapsed}
+				onToggleCollapse={onToggleCollapse}
 			/>
 			
-			{pdfUrl ? (
-				<PdfCanvas
-					canvasRef={canvasRef}
-					containerRef={containerRef}
-					isRendering={isRendering}
-				/>
-			) : (
-				<PdfPlaceholder
-					status={status}
-					errorMsg={errorMsg}
-					hasCompiled={hasCompiled}
-				/>
+			{!isCollapsed && (
+				<>
+					{pdfUrl ? (
+						<PdfCanvas
+							canvasRef={canvasRef}
+							containerRef={containerRef}
+							isRendering={isRendering}
+						/>
+					) : (
+						<PdfPlaceholder
+							status={status}
+							errorMsg={errorMsg}
+							hasCompiled={hasCompiled}
+						/>
+					)}
+				</>
 			)}
 		</div>
 	)

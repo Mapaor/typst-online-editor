@@ -6,9 +6,10 @@ interface UsePdfRendererProps {
 	pdfUrl: string | null
 	currentPage: number
 	zoom: number
+	isCollapsed: boolean
 }
 
-export function usePdfRenderer({ pdfUrl, currentPage, zoom }: UsePdfRendererProps) {
+export function usePdfRenderer({ pdfUrl, currentPage, zoom, isCollapsed }: UsePdfRendererProps) {
 	const [pdfDoc, setPdfDoc] = useState<PDFDocumentProxy | null>(null)
 	const [totalPages, setTotalPages] = useState(1)
 	const [isRendering, setIsRendering] = useState(false)
@@ -144,7 +145,7 @@ export function usePdfRenderer({ pdfUrl, currentPage, zoom }: UsePdfRendererProp
 				}
 			}
 		}
-	}, [pdfDoc, currentPage, zoom, containerWidth])
+	}, [pdfDoc, currentPage, zoom, containerWidth, isCollapsed])
 
 	// Cleanup ResizeObserver on unmount
 	useEffect(() => {

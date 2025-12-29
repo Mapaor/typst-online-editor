@@ -20,11 +20,13 @@ const SIDEBAR_COLLAPSED_WIDTH = 48
 
 const EDITOR_MIN_WIDTH = 300
 const EDITOR_DEFAULT_WIDTH = 500
-const PREVIEW_MIN_WIDTH = 300 // Minimum width for PDF preview
+const PREVIEW_MIN_WIDTH = 440 // Minimum width for PDF preview (toolbar requires 400px)
+const PREVIEW_COLLAPSED_WIDTH = 48
 
 export default function TypstEditor() {
 	const [showExamples, setShowExamples] = useState(false)
 	const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+	const [isPreviewCollapsed, setIsPreviewCollapsed] = useState(false)
 	
 	// Compiler management
 	const { status, pdfUrl, errorMsg, hasCompiled, compileNow, compileDebounced } = useTypstCompiler()
@@ -104,6 +106,7 @@ export default function TypstEditor() {
 	}
 
 	const effectiveSidebarWidth = isSidebarCollapsed ? SIDEBAR_COLLAPSED_WIDTH : sidebarResize.value
+	const effectivePreviewWidth = isPreviewCollapsed ? PREVIEW_COLLAPSED_WIDTH : PREVIEW_MIN_WIDTH
 	const isAnyResizing = sidebarResize.isResizing || editorResize.isResizing
 
 	return (
@@ -164,12 +167,14 @@ export default function TypstEditor() {
 				<div className="flex flex-1 min-w-0 overflow-hidden" id="editor-preview-container">
 					{/* Code Editor */}
 					<div 
-						style={{ 
+						className={isPreviewCollapsed ? "flex-1 min-w-0" : "shrink-0"}
+						style={isPreviewCollapsed ? {
+							minWidth: `${EDITOR_MIN_WIDTH}px`,
+						} : { 
 							width: `${editorResize.value}px`,
 							minWidth: `${EDITOR_MIN_WIDTH}px`,
 							maxWidth: `${editorResize.value}px`,
 						}}
-						className="shrink-0"
 					>
 						<CodeEditor
 							filePath={activeFilePath}
@@ -179,26 +184,33 @@ export default function TypstEditor() {
 					</div>
 
 					{/* Editor/Preview Resize Handle */}
-					<ResizeHandle
-						isResizing={editorResize.isResizing}
-						onMouseDown={(e) => {
-							// Dynamically calculate max width based on actual container size
-							// This prevents the editor from exceeding available space
-							const container = document.getElementById('editor-preview-container')
-							if (container) {
-								const containerWidth = container.offsetWidth
-								const handleWidth = 6
-								const maxEditorWidth = containerWidth - PREVIEW_MIN_WIDTH - handleWidth
-								editorResize.setMaxValue(maxEditorWidth)
-							}
-							editorResize.startResize(e)
-						}}
-					/>
+					{!isPreviewCollapsed && (
+						<ResizeHandle
+							isResizing={editorResize.isResizing}
+							onMouseDown={(e) => {
+								// Dynamically calculate max width based on actual container size
+								// This prevents the editor from exceeding available space
+								const container = document.getElementById('editor-preview-container')
+								if (container) {
+									const containerWidth = container.offsetWidth
+									const handleWidth = 6
+									const maxEditorWidth = containerWidth - effectivePreviewWidth - handleWidth
+									editorResize.setMaxValue(maxEditorWidth)
+								}
+								editorResize.startResize(e)
+							}}
+						/>
+					)}
 
 					{/* PDF Preview - Takes remaining space */}
 					<div 
-						className="flex-1 min-w-0"
-						style={{ 
+						className={isPreviewCollapsed ? "shrink-0" : "flex-1 min-w-0"}
+						style={isPreviewCollapsed ? { 
+							width: `${PREVIEW_COLLAPSED_WIDTH}px`,
+							minWidth: `${PREVIEW_COLLAPSED_WIDTH}px`,
+							maxWidth: `${PREVIEW_COLLAPSED_WIDTH}px`,
+							transition: 'width 0.2s ease-in-out'
+						} : {
 							minWidth: `${PREVIEW_MIN_WIDTH}px`,
 						}}
 					>
@@ -209,6 +221,8 @@ export default function TypstEditor() {
 							hasCompiled={hasCompiled}
 							fileCount={currentProject.files.length}
 							charCount={getActiveFile()?.content.length || 0}
+							isCollapsed={isPreviewCollapsed}
+							onToggleCollapse={() => setIsPreviewCollapsed(!isPreviewCollapsed)}
 						/>
 					</div>
 				</div>

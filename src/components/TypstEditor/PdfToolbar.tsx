@@ -1,4 +1,4 @@
-import { ZoomIn, ZoomOut, Maximize2, Minimize2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ZoomIn, ZoomOut, Maximize2, Minimize2, ChevronLeft, ChevronRight, X, Eye } from 'lucide-react'
 
 interface PdfToolbarProps {
 	pdfUrl: string | null
@@ -10,6 +10,8 @@ interface PdfToolbarProps {
 	onZoomIn: () => void
 	onZoomOut: () => void
 	onZoomFit: () => void
+	isCollapsed: boolean
+	onToggleCollapse: () => void
 }
 
 export default function PdfToolbar({
@@ -21,11 +23,27 @@ export default function PdfToolbar({
 	onNextPage,
 	onZoomIn,
 	onZoomOut,
-	onZoomFit
+	onZoomFit,
+	isCollapsed,
+	onToggleCollapse
 }: PdfToolbarProps) {
+	if (isCollapsed) {
+		return (
+			<div className="h-full flex flex-col items-center justify-start bg-gray-800 border-l border-gray-700">
+				<button
+					onClick={onToggleCollapse}
+					className="p-3 hover:bg-gray-700 text-gray-400 hover:text-gray-200 transition-colors"
+					title="Show Preview"
+				>
+					<Eye className="w-5 h-5" />
+				</button>
+			</div>
+		)
+	}
+	
 	return (
 		<div className="px-4 py-2 bg-gray-800 border-b border-gray-700 flex items-center justify-between">
-			<span className="text-sm text-gray-400">PDF Preview</span>
+			<span className="text-sm text-gray-400 whitespace-nowrap">PDF Preview</span>
 			
 			{pdfUrl && (
 				<div className="flex items-center gap-3">
@@ -60,7 +78,7 @@ export default function PdfToolbar({
 							onClick={onZoomOut}
 							className="p-1 hover:bg-gray-700 rounded text-gray-400 hover:text-gray-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
 							title="Zoom Out"
-							disabled={zoom <= 50}
+							disabled={zoom <= 100}
 						>
 							<ZoomOut className="w-4 h-4" />
 						</button>
@@ -91,6 +109,15 @@ export default function PdfToolbar({
 						title="Open in New Tab"
 					>
 						<Maximize2 className="w-4 h-4" />
+					</button>
+					
+					{/* Close Preview */}
+					<button
+						onClick={onToggleCollapse}
+						className="p-1 hover:bg-gray-700 rounded text-gray-400 hover:text-gray-200 transition-colors"
+						title="Close Preview"
+					>
+						<X className="w-4 h-4" />
 					</button>
 				</div>
 			)}
