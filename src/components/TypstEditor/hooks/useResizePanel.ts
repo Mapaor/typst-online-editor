@@ -8,9 +8,10 @@ interface UseResizePanelOptions {
 }
 
 export function useResizePanel(options: UseResizePanelOptions) {
-	const { minValue, maxValue, initialValue, onResize } = options
+	const { minValue, initialValue, onResize } = options
 	const [value, setValue] = useState(initialValue)
 	const [isResizing, setIsResizing] = useState(false)
+	const [dynamicMaxValue, setDynamicMaxValue] = useState(options.maxValue)
 	const startXRef = useRef(0)
 	const startValueRef = useRef(initialValue)
 
@@ -27,7 +28,7 @@ export function useResizePanel(options: UseResizePanelOptions) {
 		const handleMouseMove = (e: MouseEvent) => {
 			const delta = e.clientX - startXRef.current
 			const newValue = startValueRef.current + delta
-			const clampedValue = Math.min(Math.max(newValue, minValue), maxValue)
+			const clampedValue = Math.min(Math.max(newValue, minValue), dynamicMaxValue)
 			
 			setValue(clampedValue)
 			onResize?.(clampedValue)
@@ -48,12 +49,14 @@ export function useResizePanel(options: UseResizePanelOptions) {
 			document.body.style.cursor = ''
 			document.body.style.userSelect = ''
 		}
-	}, [isResizing, minValue, maxValue, onResize])
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isResizing, minValue, dynamicMaxValue])
 
 	return {
 		value,
 		isResizing,
 		startResize,
 		setValue,
+		setMaxValue: setDynamicMaxValue,
 	}
 }

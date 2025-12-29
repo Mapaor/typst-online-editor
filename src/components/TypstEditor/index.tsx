@@ -20,6 +20,7 @@ const SIDEBAR_COLLAPSED_WIDTH = 48
 
 const EDITOR_MIN_WIDTH = 300
 const EDITOR_DEFAULT_WIDTH = 500
+const PREVIEW_MIN_WIDTH = 300 // Minimum width for PDF preview
 
 export default function TypstEditor() {
 	const [showExamples, setShowExamples] = useState(false)
@@ -55,7 +56,7 @@ export default function TypstEditor() {
 	// Editor resize (middle panel)
 	const editorResize = useResizePanel({
 		minValue: EDITOR_MIN_WIDTH,
-		maxValue: 2000, // Will be clamped by available space
+		maxValue: 5000, // High max, constrained dynamically
 		initialValue: EDITOR_DEFAULT_WIDTH,
 	})
 
@@ -103,9 +104,18 @@ export default function TypstEditor() {
 	}
 
 	const effectiveSidebarWidth = isSidebarCollapsed ? SIDEBAR_COLLAPSED_WIDTH : sidebarResize.value
+	const isAnyResizing = sidebarResize.isResizing || editorResize.isResizing
 
 	return (
 		<div className="flex flex-col h-screen bg-gray-900 text-white">
+			{/* Global resize overlay - prevents iframe from capturing cursor */}
+			{isAnyResizing && (
+				<div 
+					className="fixed inset-0 z-50 cursor-col-resize"
+					style={{ backgroundColor: 'transparent' }}
+				/>
+			)}
+			
 			<TypstEditorHeader
 				status={status}
 				hasCompiled={hasCompiled}
@@ -150,37 +160,58 @@ export default function TypstEditor() {
 					/>
 				)}
 
-				{/* Code Editor */}
-				<div 
-					style={{ 
-						width: `${editorResize.value}px`,
-						minWidth: `${EDITOR_MIN_WIDTH}px`,
-					}}
-					className="shrink-0"
-				>
-					<CodeEditor
-						filePath={activeFilePath}
-						content={getActiveFile()?.content || ''}
-						onChange={updateActiveFileContent}
-					/>
-				</div>
+				{/* Editor + Preview Container - Takes remaining space */}
+				<div className="flex flex-1 min-w-0 overflow-hidden" id="editor-preview-container">
+					{/* Code Editor */}
+					<div 
+						style={{ 
+							width: `${editorResize.value}px`,
+							flexShrink: 0,
+							flexGrow: 0,
+							minWidth: `${EDITOR_MIN_WIDTH}px`,
+						}}
+					>
+						<CodeEditor
+							filePath={activeFilePath}
+							content={getActiveFile()?.content || ''}
+							onChange={updateActiveFileContent}
+						/>
+					</div>
 
-				{/* Editor/Preview Resize Handle */}
-				<ResizeHandle
-					isResizing={editorResize.isResizing}
-					onMouseDown={editorResize.startResize}
-				/>
-
-				{/* PDF Preview - Takes remaining space */}
-				<div className="flex-1 min-w-0">
-					<PdfPreview
-						pdfUrl={pdfUrl}
-						status={status}
-						errorMsg={errorMsg}
-						hasCompiled={hasCompiled}
-						fileCount={currentProject.files.length}
-						charCount={getActiveFile()?.content.length || 0}
+					{/* Editor/Preview Resize Handle */}
+					<ResizeHandle
+						isResizing={editorResize.isResizing}
+						onMouseDown={(e) => {
+							// Dynamically calculate max width based on actual container size
+							// This prevents the editor from exceeding available space
+							const container = document.getElementById('editor-preview-container')
+							if (container) {
+								const containerWidth = container.offsetWidth
+								const handleWidth = 6
+								const maxEditorWidth = containerWidth - PREVIEW_MIN_WIDTH - handleWidth
+								editorResize.setMaxValue(maxEditorWidth)
+							}
+							editorResize.startResize(e)
+						}}
 					/>
+
+					{/* PDF Preview - Takes remaining space */}
+					<div 
+						style={{ 
+							flex: '1 1 auto',
+							minWidth: `${PREVIEW_MIN_WIDTH}px`,
+							overflow: 'hidden',
+						}}
+					>
+						<PdfPreview
+							pdfUrl={pdfUrl}
+							status={status}
+							errorMsg={errorMsg}
+							hasCompiled={hasCompiled}
+							fileCount={currentProject.files.length}
+							charCount={getActiveFile()?.content.length || 0}
+						/>
+					</div>
 				</div>
 			</div>
 		</div>
