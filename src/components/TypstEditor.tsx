@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Loader2, CheckCircle2, XCircle, Check, Zap } from 'lucide-react'
+import { Loader2, CheckCircle2, XCircle, Check, Zap, FileText, ChevronDown } from 'lucide-react'
 import { TypstCompilerService, type CompileStatus } from '@/lib/typst/TypstCompilerService'
 import { debounce, downloadPdfFromUrl } from '@/lib/utils/helpers'
+import { TYPST_EXAMPLES } from '@/lib/typst/examples/TypstExamples'
 
 export default function TypstEditor() {
 	const [typstCode, setTypstCode] = useState(`= Hello Typst
@@ -13,6 +14,7 @@ This is a test.`)
 	const [pdfUrl, setPdfUrl] = useState<string | null>(null)
 	const [errorMsg, setErrorMsg] = useState<string | null>(null)
 	const [hasCompiled, setHasCompiled] = useState(false)
+	const [showExamples, setShowExamples] = useState(false)
 
 	const compilerServiceRef = useRef<TypstCompilerService | null>(null)
 	const debouncedCompileRef = useRef<((code: string) => void) & { cancel: () => void } | null>(null)
@@ -72,6 +74,14 @@ This is a test.`)
 		}
 	}
 
+	function loadExample(exampleId: string) {
+		const example = TYPST_EXAMPLES.find(ex => ex.id === exampleId)
+		if (example) {
+			setTypstCode(example.code)
+			setShowExamples(false)
+		}
+	}
+
 	// Get status text based on current state
 	function getStatusText(): React.ReactNode {
 		switch (status) {
@@ -116,7 +126,33 @@ This is a test.`)
 	return (
 		<div className="flex flex-col h-screen bg-gray-900 text-white">
 			<div className="flex justify-between items-center px-4 py-3 bg-gray-800 border-b border-gray-700">
-				<h1 className="text-xl font-semibold">Typst Online Editor</h1>
+				<div className="flex items-center gap-4">
+					<h1 className="text-xl font-semibold">Typst Online Editor</h1>
+					<div className="relative">
+						<button
+							className="flex items-center gap-2 px-3 py-2 bg-gray-700 text-white rounded hover:bg-gray-600"
+							onClick={() => setShowExamples(!showExamples)}
+						>
+							<FileText className="w-4 h-4" />
+							Load Example
+							<ChevronDown className="w-4 h-4" />
+						</button>
+						{showExamples && (
+							<div className="absolute top-full left-0 mt-1 w-64 bg-gray-800 border border-gray-700 rounded shadow-lg z-50">
+								{TYPST_EXAMPLES.map((example) => (
+									<button
+										key={example.id}
+										className="w-full text-left px-4 py-3 hover:bg-gray-700 border-b border-gray-700 last:border-b-0"
+										onClick={() => loadExample(example.id)}
+									>
+										<div className="font-medium">{example.name}</div>
+										<div className="text-sm text-gray-400">{example.description}</div>
+									</button>
+								))}
+							</div>
+						)}
+					</div>
+				</div>
 				<div className="flex items-center gap-4">
 					<div className="text-sm">
 						{getStatusText()}
