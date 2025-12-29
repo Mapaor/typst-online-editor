@@ -90,7 +90,10 @@ export function usePdfRenderer({ pdfUrl, currentPage, zoom, isCollapsed }: UsePd
 				
 				if (!mounted || !canvas || !container) return
 
-				const context = canvas.getContext('2d')
+				const context = canvas.getContext('2d', { 
+					alpha: false,
+					desynchronized: true
+				})
 				if (!context) return
 
 				// Use the tracked container width, fallback to current width if not yet set
@@ -102,11 +105,25 @@ export function usePdfRenderer({ pdfUrl, currentPage, zoom, isCollapsed }: UsePd
 				
 				// Apply zoom scaling
 				const scale = (zoom / 100) * (availableWidth / viewport.width)
-				const scaledViewport = page.getViewport({ scale })
+				
+				// Get device pixel ratio for high-DPI displays (retina, etc.)
+				// Use a minimum of 2 for better quality even on standard displays
+				const pixelRatio = Math.max(window.devicePixelRatio || 1, 4)
+				
+				// Render at higher resolution for crisp output
+				const outputScale = scale * pixelRatio
+				const scaledViewport = page.getViewport({ scale: outputScale })
 
-				// Set canvas dimensions
+				// Set canvas actual size (high resolution for crisp rendering)
 				canvas.width = scaledViewport.width
 				canvas.height = scaledViewport.height
+
+				// Set canvas display size (CSS size)
+				canvas.style.width = `${scaledViewport.width / pixelRatio}px`
+				canvas.style.height = `${scaledViewport.height / pixelRatio}px`
+
+				// Disable image smoothing for crisp text rendering
+				context.imageSmoothingEnabled = false
 
 				// Render PDF page
 				const renderContext = {
