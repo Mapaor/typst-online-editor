@@ -13,7 +13,7 @@ This is a test.`)
 	const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
 	const compilerServiceRef = useRef<TypstCompilerService | null>(null)
-	const debouncedCompileRef = useRef<ReturnType<typeof debounce> | null>(null)
+	const debouncedCompileRef = useRef<((code: string) => void) & { cancel: () => void } | null>(null)
 
 	useEffect(() => {
 		// Initialize compiler service
@@ -36,9 +36,9 @@ This is a test.`)
 		})
 
 		// Create debounced compile function
-		debouncedCompileRef.current = debounce(async (code: string) => {
+		debouncedCompileRef.current = debounce((code: string) => {
 			if (compilerServiceRef.current) {
-				await compilerServiceRef.current.compile(code)
+				void compilerServiceRef.current.compile(code)
 			}
 		}, 1000)
 
@@ -126,7 +126,7 @@ This is a test.`)
 								</>
 							)}
 							{status === 'idle' && (
-								<p className="text-lg">Click "Compile Now" to generate PDF</p>
+								<p className="text-lg">Click &quot;Compile Now&quot; to generate PDF</p>
 							)}
 							<p className="mt-4 text-sm">Code: {typstCode.length} chars</p>
 						</div>

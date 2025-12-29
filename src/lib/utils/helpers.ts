@@ -2,16 +2,16 @@
  * Creates a debounced function that delays invoking func until after delay milliseconds
  * have elapsed since the last time the debounced function was invoked.
  */
-export function debounce<T extends (...args: any[]) => any>(
-	func: T,
+export function debounce<Args extends unknown[], R>(
+	func: (...args: Args) => R,
 	delay: number
 ): {
-	(...args: Parameters<T>): void
+	(...args: Args): void
 	cancel: () => void
 } {
 	let timeoutId: number | null = null
 
-	const debounced = (...args: Parameters<T>) => {
+	const debounced = (...args: Args) => {
 		if (timeoutId !== null) {
 			clearTimeout(timeoutId)
 		}
