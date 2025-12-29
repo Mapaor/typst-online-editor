@@ -152,65 +152,63 @@ export default function FileExplorer({
 
 	const fileTree = buildFileTree(project)
 
-	return (
-		<div className="relative h-full flex flex-col w-full bg-gray-900 border-r border-gray-700">
-			{/* Toggle button */}
-			<div className="flex items-center justify-between px-4 py-2 border-b border-gray-700 bg-gray-800">
-				{!isCollapsed && <h2 className="text-sm font-semibold text-gray-200">Files</h2>}
+	if (isCollapsed) {
+		return (
+			<div className="h-full flex flex-col items-center justify-start bg-gray-900 border-r border-gray-700">
 				<button
 					onClick={onToggleCollapse}
-					className="p-1.5 text-gray-300 hover:bg-gray-700 transition-colors rounded ml-auto"
-					title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+					className="p-3 hover:bg-gray-800 text-gray-400 hover:text-gray-200 transition-colors"
+					title="Show Files"
 				>
-					{isCollapsed ? <PanelLeft className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+					<PanelLeft className="w-5 h-5" />
 				</button>
 			</div>
+		)
+	}
 
-			{!isCollapsed && (
-				<>
-					<FileExplorerHeader project={project} />
+	return (
+		<div className="relative h-full flex flex-col w-full bg-gray-900 border-r border-gray-700">
+			<FileExplorerHeader project={project} onToggleCollapse={onToggleCollapse || (() => {})} />
 
-					{/* Files List */}
-					<div 
-						className="flex-1 overflow-y-auto"
-						onDragOver={(e) => {
-							if (draggedItem && !e.defaultPrevented) {
-								handleDragOver('', false, e)
-							}
-						}}
-						onDrop={(e) => {
-							if (draggedItem && !e.defaultPrevented) {
-								handleDrop('', false, e)
-							}
-						}}
-					>
-						{renderFileTree(fileTree)}
-						{creatingItem?.parentPath === '' && (
-							<CreateItemInput
-								type={creatingItem.type}
-								value={newItemName}
-								onChange={setNewItemName}
-								onConfirm={handleCreateItem}
-								onCancel={handleCancelCreate}
-								depth={0}
-							/>
-						)}
-					</div>
-
-					<FileExplorerActions
-						onCreateFile={() => {
-							const parentPath = getParentPathForNewItem()
-							if (parentPath) expandFolder(parentPath)
-							setCreatingItem({ type: 'file', parentPath })
-						}}
-						onCreateFolder={() => {
-							const parentPath = getParentPathForNewItem()
-							if (parentPath) expandFolder(parentPath)
-							setCreatingItem({ type: 'folder', parentPath })
-						}}
+			{/* Files List */}
+			<div 
+				className="flex-1 overflow-y-auto"
+				onDragOver={(e) => {
+					if (draggedItem && !e.defaultPrevented) {
+						handleDragOver('', false, e)
+					}
+				}}
+				onDrop={(e) => {
+					if (draggedItem && !e.defaultPrevented) {
+						handleDrop('', false, e)
+					}
+				}}
+			>
+				{renderFileTree(fileTree)}
+				{creatingItem?.parentPath === '' && (
+					<CreateItemInput
+						type={creatingItem.type}
+						value={newItemName}
+						onChange={setNewItemName}
+						onConfirm={handleCreateItem}
+						onCancel={handleCancelCreate}
+						depth={0}
 					/>
-				</>
-			)}
+				)}
+			</div>
+
+			<FileExplorerActions
+				onCreateFile={() => {
+					const parentPath = getParentPathForNewItem()
+					if (parentPath) expandFolder(parentPath)
+					setCreatingItem({ type: 'file', parentPath })
+				}}
+				onCreateFolder={() => {
+					const parentPath = getParentPathForNewItem()
+					if (parentPath) expandFolder(parentPath)
+					setCreatingItem({ type: 'folder', parentPath })
+				}}
+			/>
 		</div>
 	)
 }
