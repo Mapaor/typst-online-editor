@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { Loader2, CheckCircle2, XCircle, Check, Zap } from 'lucide-react'
 import { TypstCompilerService, type CompileStatus } from '@/lib/typst/TypstCompilerService'
 import { debounce, downloadPdfFromUrl } from '@/lib/utils/helpers'
 
@@ -11,6 +12,7 @@ This is a test.`)
 	const [status, setStatus] = useState<CompileStatus>('idle')
 	const [pdfUrl, setPdfUrl] = useState<string | null>(null)
 	const [errorMsg, setErrorMsg] = useState<string | null>(null)
+	const [hasCompiled, setHasCompiled] = useState(false)
 
 	const compilerServiceRef = useRef<TypstCompilerService | null>(null)
 	const debouncedCompileRef = useRef<((code: string) => void) & { cancel: () => void } | null>(null)
@@ -28,10 +30,12 @@ This is a test.`)
 			onSuccess: (pdf, url) => {
 				setPdfUrl(url)
 				setErrorMsg(null)
+				setHasCompiled(true)
 			},
 			onError: (error) => {
 				setErrorMsg(error)
 				setPdfUrl(null)
+				setHasCompiled(true)
 			},
 		})
 
@@ -68,16 +72,54 @@ This is a test.`)
 		}
 	}
 
+	// Get status text based on current state
+	function getStatusText(): React.ReactNode {
+		switch (status) {
+			case 'compiling':
+				return (
+					<span className="flex items-center gap-2">
+						<Loader2 className="w-4 h-4 animate-spin" />
+						{hasCompiled ? 'Compiling...' : 'Initializing compiler...'}
+					</span>
+				)
+			case 'done':
+				return (
+					<span className="flex items-center gap-2">
+						<CheckCircle2 className="w-4 h-4 text-green-500" />
+						Compiled
+					</span>
+				)
+			case 'error':
+				return (
+					<span className="flex items-center gap-2">
+						<XCircle className="w-4 h-4 text-red-500" />
+						Error
+					</span>
+				)
+			case 'idle':
+				return hasCompiled ? (
+					<span className="flex items-center gap-2">
+						<Check className="w-4 h-4 text-green-500" />
+						Ready
+					</span>
+				) : (
+					<span className="flex items-center gap-2">
+						<Zap className="w-4 h-4 text-blue-500" />
+						Ready to compile
+					</span>
+				)
+			default:
+				return 'Ready'
+		}
+	}
+
 	return (
 		<div className="flex flex-col h-screen bg-gray-900 text-white">
 			<div className="flex justify-between items-center px-4 py-3 bg-gray-800 border-b border-gray-700">
 				<h1 className="text-xl font-semibold">Typst Online Editor</h1>
 				<div className="flex items-center gap-4">
 					<div className="text-sm">
-						{status === 'compiling' && '⏳ Compiling...'}
-						{status === 'done' && '✅ Ready'}
-						{status === 'error' && '❌ Error'}
-						{status === 'idle' && 'Ready'}
+						{getStatusText()}
 					</div>
 					<button
 						className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -116,17 +158,32 @@ This is a test.`)
 						/>
 					) : (
 						<div className="text-center text-gray-400">
-							{status === 'compiling' && <p className="text-lg">⏳ Compiling...</p>}
+							{status === 'compiling' && (
+								<p className="text-lg flex items-center justify-center gap-2">
+									<Loader2 className="w-5 h-5 animate-spin" />
+								{hasCompiled ? 'Compiling...' : 'Initializing compiler...'}
+								</p>
+							)}
 							{status === 'error' && (
 								<>
-									<p className="text-lg text-red-500">❌ Error</p>
+									<p className="text-lg text-red-500 flex items-center justify-center gap-2">
+										<XCircle className="w-5 h-5" />
+										Error
+									</p>
 									<pre className="mt-2 text-sm text-left max-w-2xl overflow-auto p-4 bg-gray-900 rounded">
 										{errorMsg}
 									</pre>
 								</>
 							)}
 							{status === 'idle' && (
-								<p className="text-lg">Click &quot;Compile Now&quot; to generate PDF</p>
+								<p className="text-lg">
+								{hasCompiled 
+										? 'Type to edit and compile' 
+										: 'Click "Compile Now" or start typing to generate PDF'}
+								</p>
+							)}
+							{status === 'done' && (
+								<p className="text-lg text-gray-400">Compilation complete</p>
 							)}
 							<p className="mt-4 text-sm">Code: {typstCode.length} chars</p>
 						</div>
