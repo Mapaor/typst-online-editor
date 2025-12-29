@@ -22,18 +22,19 @@ export default function PdfPreview({ pdfUrl, status, errorMsg, hasCompiled, isCo
 	const [zoom, setZoom] = useState(100)
 	const [currentPage, setCurrentPage] = useState(1)
 	
-	const { totalPages, isRendering, canvasRefs, pageRefs, containerRef } = usePdfRenderer({
+	const { totalPages, isRendering, canvasRefs, pageRefs, containerRef, scrollToPage } = usePdfRenderer({
 		pdfUrl,
 		currentPage,
 		zoom,
-		isCollapsed
+		isCollapsed,
+		onPageChange: setCurrentPage
 	})
 	
 	const handleZoomIn = () => setZoom(prev => Math.min(prev + 25, 200))
 	const handleZoomOut = () => setZoom(prev => Math.max(prev - 25, 50))
 	const handleZoomFit = () => setZoom(100)
-	const handlePrevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1))
-	const handleNextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages))
+	const handlePrevPage = () => scrollToPage(Math.max(currentPage - 1, 1))
+	const handleNextPage = () => scrollToPage(Math.min(currentPage + 1, totalPages))
 	
 	return (
 		<div className="h-full flex py-1 flex-col bg-gray-800">

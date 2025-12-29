@@ -7,6 +7,7 @@ interface UsePdfRendererProps {
 	currentPage: number
 	zoom: number
 	isCollapsed: boolean
+	onPageChange?: (page: number) => void
 }
 
 interface CanvasInfo {
@@ -14,7 +15,7 @@ interface CanvasInfo {
 	renderTask: RenderTask | null
 }
 
-export function usePdfRenderer({ pdfUrl, currentPage, zoom, isCollapsed }: UsePdfRendererProps) {
+export function usePdfRenderer({ pdfUrl, currentPage, zoom, isCollapsed, onPageChange }: UsePdfRendererProps) {
 	const [pdfDoc, setPdfDoc] = useState<PDFDocumentProxy | null>(null)
 	const [totalPages, setTotalPages] = useState(1)
 	const [isRendering, setIsRendering] = useState(false)
@@ -24,6 +25,9 @@ export function usePdfRenderer({ pdfUrl, currentPage, zoom, isCollapsed }: UsePd
 	const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map())
 	const resizeObserverRef = useRef<ResizeObserver | null>(null)
 	const observerSetupRef = useRef(false)
+	const intersectionObserverRef = useRef<IntersectionObserver | null>(null)
+	const programmaticScrollRef = useRef(false)
+	const lastPageChangeRef = useRef(currentPage)
 
 	// Load PDF document when URL changes
 	useEffect(() => {
@@ -53,11 +57,20 @@ export function usePdfRenderer({ pdfUrl, currentPage, zoom, isCollapsed }: UsePd
 		}
 	}, [pdfUrl])
 
-	// Scroll to current page when it changes
+	// Scroll to current page when it changes from button clicks
 	useEffect(() => {
-		const pageElement = pageRefs.current.get(currentPage)
-		if (pageElement) {
-			pageElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+		const pageChanged = currentPage !== lastPageChangeRef.current
+		lastPageChangeRef.current = currentPage
+		
+		if (!pageChanged) return
+		
+		// Only scroll if this was a programmatic change (button click)
+		if (programmaticScrollRef.current) {
+			const pageElement = pageRefs.current.get(currentPage)
+			if (pageElement) {
+				pageElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+			}
+			programmaticScrollRef.current = false
 		}
 	}, [currentPage])
 
@@ -195,6 +208,53 @@ export function usePdfRenderer({ pdfUrl, currentPage, zoom, isCollapsed }: UsePd
 		}
 	}, [pdfDoc, zoom, containerWidth, isCollapsed])
 
+	// Set up IntersectionObserver to track visible pages
+	useEffect(() => {
+		if (!totalPages || !onPageChange) return
+
+		const options = {
+			root: containerRef.current,
+			rootMargin: '-20% 0px -20% 0px', // Trigger when page is in middle 60% of viewport
+			threshold: 0
+		}
+
+		intersectionObserverRef.current = new IntersectionObserver((entries) => {
+			// Find the most visible page
+			let mostVisiblePage = currentPage
+			let maxVisibility = 0
+
+			entries.forEach((entry) => {
+				if (entry.isIntersecting) {
+					const pageNum = parseInt(entry.target.getAttribute('data-page-num') || '0')
+					if (pageNum && entry.intersectionRatio > maxVisibility) {
+						maxVisibility = entry.intersectionRatio
+						mostVisiblePage = pageNum
+					}
+				}
+			})
+
+			if (mostVisiblePage !== currentPage && maxVisibility > 0) {
+				// Page changed from scrolling, don't trigger programmatic scroll
+				programmaticScrollRef.current = false
+				onPageChange(mostVisiblePage)
+			}
+		}, options)
+
+		// Observe all page elements
+		pageRefs.current.forEach((pageElement, pageNum) => {
+			if (intersectionObserverRef.current) {
+				pageElement.setAttribute('data-page-num', pageNum.toString())
+				intersectionObserverRef.current.observe(pageElement)
+			}
+		})
+
+		return () => {
+			if (intersectionObserverRef.current) {
+				intersectionObserverRef.current.disconnect()
+			}
+		}
+	}, [totalPages, onPageChange, currentPage])
+
 	// Cleanup ResizeObserver on unmount
 	useEffect(() => {
 		return () => {
@@ -204,11 +264,20 @@ export function usePdfRenderer({ pdfUrl, currentPage, zoom, isCollapsed }: UsePd
 		}
 	}, [])
 
+	// Function to trigger programmatic page change (from buttons)
+	const scrollToPage = (page: number) => {
+		programmaticScrollRef.current = true
+		if (onPageChange) {
+			onPageChange(page)
+		}
+	}
+
 	return {
 		totalPages,
 		isRendering,
 		canvasRefs,
 		pageRefs,
-		containerRef
+		containerRef,
+		scrollToPage
 	}
 }
