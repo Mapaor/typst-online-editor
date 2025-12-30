@@ -60,8 +60,8 @@ const EMOJI_FONTS: string[] = [
 ];
 
 const CJK_FONTS: string[] = [
-	'https://cdn.jsdelivr.net/gh/typst/typst-assets@v0.13.1/files/fonts/NotoSerifCJKsc-Regular.otf',
-	'https://cdn.jsdelivr.net/gh/typst/typst-assets@v0.13.1/files/fonts/NotoSansCJKsc-Regular.otf'
+	'https://cdn.jsdelivr.net/gh/notofonts/noto-cjk@main/Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Regular.otf',
+	'https://cdn.jsdelivr.net/gh/notofonts/noto-cjk@main/Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Bold.otf'
 ];
 */
 
@@ -87,8 +87,8 @@ const EMOJI_FONTS: string[] = [
 const CJK_FONTS: string[] = [
 	// CJK (Chinese/Japanese/Korean) fonts - Loaded on demand
 	// Note: These are large files (~15-20MB each)
-	'/fonts/NotoSerifCJKsc-Regular.otf',
-	'/fonts/NotoSansCJKsc-Regular.otf'
+	'/fonts/NotoSansCJKsc-Regular.otf',
+	'/fonts/NotoSansCJKsc-Bold.otf'
 ];
 
 // ============================================================================
