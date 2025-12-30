@@ -2,6 +2,8 @@
 
 A lightweight web-based Typst editor that compiles documents directly in your browser using WebAssembly. No servers, everything client-side.
 
+Check it out here: [https://typst-online-editor.vercel.app](https://typst-online-editor.vercel.app).
+
 ## Tech used
 
 This website is built with NextJS (React), Typst.ts (Typst for the javascript world made by [@myriaddreamin](https://github.com/Myriad-Dreamin)) and PDF.js.
