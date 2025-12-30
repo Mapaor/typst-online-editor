@@ -1,6 +1,13 @@
 /// <reference lib="webworker" />
 
-import { createTypstCompiler, loadFonts, type TypstCompiler } from '@myriaddreamin/typst.ts';
+import {
+	createTypstCompiler,
+	loadFonts,
+	type TypstCompiler,
+	FetchPackageRegistry,
+	MemoryAccessModel
+} from '@myriaddreamin/typst.ts';
+import { withPackageRegistry, withAccessModel } from '@myriaddreamin/typst.ts/options.init';
 
 // ============================================================================
 // Type Definitions
@@ -68,6 +75,10 @@ let compilerPromise: Promise<TypstCompiler> | null = null;
 let compileQueue: Promise<void> = Promise.resolve();
 let emojiLoaded = false;
 
+// Package registry for Typst Universe packages (mitex, cetz, fletcher, etc.)
+const accessModel = new MemoryAccessModel();
+const packageRegistry = new FetchPackageRegistry(accessModel);
+
 // ============================================================================
 // Helpers
 // ============================================================================
@@ -101,7 +112,9 @@ async function createCompilerWithFonts(fonts: string[]): Promise<TypstCompiler> 
 		beforeBuild: [
 			loadFonts(absoluteFonts, {
 				assets: ['text']
-			})
+			}),
+			withAccessModel(accessModel),
+			withPackageRegistry(packageRegistry)
 		]
 	});
 	return compiler;
