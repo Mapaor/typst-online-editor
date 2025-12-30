@@ -1,6 +1,6 @@
 'use client'
 
-import { Loader2, CheckCircle2, XCircle, Check, Zap, FileText, ChevronDown } from 'lucide-react'
+import { Loader2, CheckCircle2, XCircle, Check, Zap, FileText, ChevronDown, Github } from 'lucide-react'
 import type { CompileStatus } from '@/lib/typst/TypstCompilerService'
 import { TYPST_EXAMPLES } from '@/lib/typst/examples/TypstExamples'
 
@@ -95,6 +95,15 @@ export default function TypstEditorHeader({
 						</div>
 					)}
 				</div>
+				<a
+					href="https://github.com/Mapaor/typst-online-editor"
+					target="_blank"
+					rel="noopener noreferrer"
+					className="p-2 text-white rounded hover:bg-gray-600 transition-transform duration-200"
+					title="View on GitHub"
+				>
+					<Github className="w-5 h-5" />
+				</a>
 			</div>
 			<div className="flex items-center gap-4">
 				<div className="text-sm">
