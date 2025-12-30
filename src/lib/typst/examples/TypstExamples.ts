@@ -12,30 +12,36 @@ export const TYPST_EXAMPLES: TypstExample[] = [
 		id: 'hello',
 		name: 'Hello World',
 		description: 'A simple document with headings and text',
-		filePath: '/typst-examples/hello.typ'
+		filePath: '/typst-examples/hello-world/main.typ'
 	},
 	{
 		id: 'math',
 		name: 'Math Document',
 		description: 'Mathematical formulas and equations',
-		filePath: '/typst-examples/math.typ'
+		filePath: '/typst-examples/math-expressions/main.typ'
 	},
 	{
 		id: 'report',
 		name: 'Academic Report',
 		description: 'A structured document with sections and formatting',
-		filePath: '/typst-examples/report.typ'
+		filePath: '/typst-examples/report/main.typ'
+	},
+	{
+		id: 'mitex',
+		name: 'Using a Package',
+		description: 'Using Mitex package from the Typst Universe',
+		filePath: '/typst-examples/mitex/main.typ'
 	},
 	{
 		id: 'multi-file',
 		name: 'Multi-File Document',
 		description: 'Document with multiple files, imports, and includes',
-		filePath: '/typst-examples/multi-file-main.typ',
+		filePath: '/typst-examples/multi-file/main.typ',
 		isMultiFile: true,
 		additionalFiles: [
-			{ path: 'multi-file-template.typ', filePath: '/typst-examples/multi-file-template.typ' },
-			{ path: 'multi-file-chapter-1.typ', filePath: '/typst-examples/multi-file-chapter-1.typ' },
-			{ path: 'multi-file-chapter-2.typ', filePath: '/typst-examples/multi-file-chapter-2.typ' },
+			{ path: 'template.typ', filePath: '/typst-examples/multi-file/template.typ' },
+			{ path: 'chapters/chapter-1.typ', filePath: '/typst-examples/multi-file/chapters/chapter-1.typ' },
+			{ path: 'chapters/chapter-2.typ', filePath: '/typst-examples/multi-file/chapters/chapter-2.typ' },
 		]
 	}
 ]

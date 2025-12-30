@@ -1,4 +1,4 @@
-#import "multi-file-template.typ": *
+#import "template.typ": *
 // if you have a template
 #show: template
 
@@ -12,5 +12,5 @@
 // chapters will not see it
 
 // Now the chapters themselves as some Typst content
-#include "multi-file-chapter-1.typ"
-#include "multi-file-chapter-2.typ"
+#include "chapters/chapter-1.typ"
+#include "chapters/chapter-2.typ"

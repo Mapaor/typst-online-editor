@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { downloadPdfFromUrl } from '@/lib/utils/helpers'
 import { TYPST_EXAMPLES, fetchExample } from '@/lib/typst/examples/TypstExamples'
 import type { Project } from '@/lib/storage/ProjectStorage'
@@ -31,6 +31,11 @@ export default function TypstEditor() {
 	// Compiler management
 	const { status, pdfUrl, errorMsg, hasCompiled, compileNow, compileDebounced } = useTypstCompiler()
 	
+	// Stable callback for project changes
+	const handleProjectChange = useCallback((files: Record<string, string>, mainFile: string) => {
+		compileDebounced(files, mainFile)
+	}, [compileDebounced])
+	
 	// Project and file management
 	const {
 		currentProject,
@@ -44,9 +49,7 @@ export default function TypstEditor() {
 		handleFileRename,
 		handleFileMove,
 		handleFileDelete,
-	} = useProjectManagement((files, mainFile) => {
-		compileDebounced(files, mainFile)
-	})
+	} = useProjectManagement(handleProjectChange)
 	
 	// Sidebar resize (left panel)
 	const sidebarResize = useResizePanel({
@@ -82,16 +85,35 @@ export default function TypstEditor() {
 			try {
 				const code = await fetchExample(example.filePath)
 				
+				// Start with the main file
+				const files: Project['files'] = [
+					{
+						path: 'main.typ',
+						content: code,
+						lastModified: 0,
+					},
+				]
+				
+				// Load additional files for multi-file examples
+				if (example.isMultiFile && example.additionalFiles) {
+					for (const additionalFile of example.additionalFiles) {
+						try {
+							const additionalContent = await fetchExample(additionalFile.filePath)
+							files.push({
+								path: additionalFile.path,
+								content: additionalContent,
+								lastModified: 0,
+							})
+						} catch (error) {
+							console.error(`Failed to load additional file ${additionalFile.path}:`, error)
+						}
+					}
+				}
+				
 				const newProject: Project = {
 					id: crypto.randomUUID(),
 					name: example.name,
-					files: [
-						{
-							path: 'main.typ',
-							content: code,
-							lastModified: 0,
-						},
-					],
+					files,
 					mainFile: 'main.typ',
 					createdAt: 0,
 					lastModified: 0,
