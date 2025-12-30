@@ -41,28 +41,54 @@ type CompileResponse =
 // Configuration
 // ============================================================================
 
-// const TYPST_VERSION = '0.7.0-rc2';
-// CDN: https://cdn.jsdelivr.net/npm/@myriaddreamin/typst-ts-web-compiler@${TYPST_VERSION}/pkg/typst_ts_web_compiler_bg.wasm
+// OPTION 1: Load from CDN (jsdelivr)
+// Pros: No local storage needed, always up-to-date, shared cache across sites
+// Cons: Requires internet connection, slower initial load, external dependency
+/*
+const TYPST_VERSION = '0.7.0-rc2';
+const TYPST_WASM_URL = `https://cdn.jsdelivr.net/npm/@myriaddreamin/typst-ts-web-compiler@${TYPST_VERSION}/pkg/typst_ts_web_compiler_bg.wasm`;
+
+const CORE_FONTS: string[] = [
+	https://cdn.jsdelivr.net/gh/typst/typst-dev-assets@v0.13.1/files/fonts/IBMPlexSans-Regular.ttf',
+	'https://cdn.jsdelivr.net/gh/typst/typst-dev-assets@v0.13.1/files/fonts/IBMPlexSans-Bold.ttf',
+	'https://cdn.jsdelivr.net/gh/typst/typst-assets@v0.13.1/files/fonts/NewCMMath-Regular.otf',
+	'https://cdn.jsdelivr.net/gh/typst/typst-assets@v0.13.1/files/fonts/NewCMMath-Book.otf'
+];
+
+const EMOJI_FONTS: string[] = [
+	'https://fonts.gstatic.com/s/notocoloremoji/v37/Yq6P-KqIXTD0t4D9z1ESnKM3-HpFab4.ttf'
+];
+
+const CJK_FONTS: string[] = [
+	'https://cdn.jsdelivr.net/gh/typst/typst-assets@v0.13.1/files/fonts/NotoSerifCJKsc-Regular.otf',
+	'https://cdn.jsdelivr.net/gh/typst/typst-assets@v0.13.1/files/fonts/NotoSansCJKsc-Regular.otf'
+];
+*/
+
+// OPTION 2: Load from local public folder (CURRENT - Recommended for offline use)
+// Pros: Faster loading, works offline, no external dependencies, predictable performance
+// Cons: Increases bundle size, requires manual updates, uses local storage
 const TYPST_WASM_URL = '/wasm/typst_ts_web_compiler_bg.wasm';
 
 const CORE_FONTS: string[] = [
-	// IBM Plex Sans (Modern UI)
-	// CDN: https://cdn.jsdelivr.net/gh/typst/typst-dev-assets@v0.13.1/files/fonts/IBMPlexSans-Regular.ttf
+	// IBM Plex Sans (Modern UI fonts)
 	'/fonts/IBMPlexSans-Regular.ttf',
-	// CDN: https://cdn.jsdelivr.net/gh/typst/typst-dev-assets@v0.13.1/files/fonts/IBMPlexSans-Bold.ttf
 	'/fonts/IBMPlexSans-Bold.ttf',
-
 	// Math fonts (Critical for mathematical formulas)
-	// CDN: https://cdn.jsdelivr.net/gh/typst/typst-assets@v0.13.1/files/fonts/NewCMMath-Regular.otf
 	'/fonts/NewCMMath-Regular.otf',
-	// CDN: https://cdn.jsdelivr.net/gh/typst/typst-assets@v0.13.1/files/fonts/NewCMMath-Book.otf
 	'/fonts/NewCMMath-Book.otf'
 ];
 
 const EMOJI_FONTS: string[] = [
-	// Emoji font (Noto Color Emoji) (~9MB)
-	// CDN: https://fonts.gstatic.com/s/notocoloremoji/v37/Yq6P-KqIXTD0t4D9z1ESnKM3-HpFab4.ttf
+	// Emoji support (Noto Color Emoji ~9MB) - Loaded on demand
 	'/fonts/NotoColorEmoji.ttf'
+];
+
+const CJK_FONTS: string[] = [
+	// CJK (Chinese/Japanese/Korean) fonts - Loaded on demand
+	// Note: These are large files (~15-20MB each)
+	'/fonts/NotoSerifCJKsc-Regular.otf',
+	'/fonts/NotoSansCJKsc-Regular.otf'
 ];
 
 // ============================================================================
@@ -74,10 +100,15 @@ const ctx: DedicatedWorkerGlobalScope = self as unknown as DedicatedWorkerGlobal
 let compilerPromise: Promise<TypstCompiler> | null = null;
 let compileQueue: Promise<void> = Promise.resolve();
 let emojiLoaded = false;
+let cjkLoaded = false;
+let lastCompileTime = Date.now();
 
 // Package registry for Typst Universe packages (mitex, cetz, fletcher, etc.)
 const accessModel = new MemoryAccessModel();
 const packageRegistry = new FetchPackageRegistry(accessModel);
+
+// Compiler lifecycle: Reset after 30 minutes of inactivity to free memory
+const COMPILER_IDLE_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
 // ============================================================================
 // Helpers
@@ -128,33 +159,84 @@ function needsEmojiFont(text: string): boolean {
 }
 
 /**
+ * Detects if text contains CJK (Chinese, Japanese, Korean) characters
+ */
+function needsCJKFont(text: string): boolean {
+	// CJK Unified Ideographs and extensions
+	return /[\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF]|[\u3040-\u309F\u30A0-\u30FF]|[\uAC00-\uD7AF]/.test(text);
+}
+
+/**
  * Gets the current font set based on loaded fonts
  */
 function getCurrentFonts(): string[] {
-	return emojiLoaded ? [...CORE_FONTS, ...EMOJI_FONTS] : CORE_FONTS;
+	const fonts = [...CORE_FONTS];
+	if (emojiLoaded) fonts.push(...EMOJI_FONTS);
+	if (cjkLoaded) fonts.push(...CJK_FONTS);
+	return fonts;
 }
 
 // ============================================================================
 // Compiler Management
 // ============================================================================
 
+/**
+ * Upgrades compiler with emoji fonts (lazy loading)
+ */
 async function upgradeCompilerWithEmoji(): Promise<void> {
 	if (emojiLoaded) return;
 
 	emojiLoaded = true;
-	console.log('Typst - Upgrading compiler with emoji fonts...');
+	console.log('[Typst] Upgrading compiler with emoji fonts...');
 	
 	const newCompiler = await createCompilerWithFonts(getCurrentFonts());
 	compilerPromise = Promise.resolve(newCompiler);
 	
-	console.log('Typst - Compiler upgraded successfully.');
+	console.log('[Typst] Emoji fonts loaded successfully');
 }
 
+/**
+ * Upgrades compiler with CJK fonts (lazy loading)
+ */
+async function upgradeCompilerWithCJK(): Promise<void> {
+	if (cjkLoaded) return;
+
+	cjkLoaded = true;
+	console.log('[Typst] Upgrading compiler with CJK fonts...');
+	
+	const newCompiler = await createCompilerWithFonts(getCurrentFonts());
+	compilerPromise = Promise.resolve(newCompiler);
+	
+	console.log('[Typst] CJK fonts loaded successfully');
+}
+
+/**
+ * Gets the compiler instance, creating it if necessary
+ */
 function getCompiler(): Promise<TypstCompiler> {
+	// Check if compiler should be reset due to inactivity
+	if (compilerPromise && Date.now() - lastCompileTime > COMPILER_IDLE_TIMEOUT) {
+		console.log('[Typst] Resetting compiler after idle timeout');
+		compilerPromise = null;
+		emojiLoaded = false;
+		cjkLoaded = false;
+	}
+
 	if (compilerPromise) return compilerPromise;
 
+	console.log('[Typst] Initializing new compiler instance');
 	compilerPromise = createCompilerWithFonts(CORE_FONTS);
 	return compilerPromise;
+}
+
+/**
+ * Manually reset compiler (useful for memory management)
+ */
+function resetCompiler(): void {
+	console.log('[Typst] Manual compiler reset');
+	compilerPromise = null;
+	emojiLoaded = false;
+	cjkLoaded = false;
 }
 
 // ============================================================================
@@ -166,10 +248,20 @@ async function compilePdf(
 	mainFile: string,
 	images: Record<string, Uint8Array<ArrayBuffer>> = {}
 ): Promise<{ pdf: Uint8Array; diagnostics: string[] }> {
-	// Check for emoji in all files and upgrade compiler if needed
+	// Update last compile time for lifecycle management
+	lastCompileTime = Date.now();
+
+	// Check content for special font requirements and upgrade compiler if needed
 	const allContent = Object.values(files).join('\n');
+	
+	// Lazy load emoji fonts
 	if (needsEmojiFont(allContent)) {
 		await upgradeCompilerWithEmoji();
+	}
+	
+	// Lazy load CJK fonts
+	if (needsCJKFont(allContent)) {
+		await upgradeCompilerWithCJK();
 	}
 
 	const compiler = await getCompiler();
@@ -181,23 +273,38 @@ async function compilePdf(
 		compiler.addSource(normalizedPath, content);
 	}
 
-	// Add images
+	// Add images to virtual file system
 	for (const [path, data] of Object.entries(images)) {
-		compiler.mapShadow('/' + path, data);
+		const normalizedPath = path.startsWith('/') ? path : '/' + path;
+		compiler.mapShadow(normalizedPath, data);
 	}
 
 	// Ensure mainFile path starts with /
 	const normalizedMainFile = mainFile.startsWith('/') ? mainFile : '/' + mainFile;
 
+	// Compile the document
 	const result = await compiler.compile({
 		mainFilePath: normalizedMainFile,
-		format: 1,
-		diagnostics: 'unix'
+		format: 1, // PDF format
+		diagnostics: 'unix' // Unix-style diagnostic messages
 	});
 
+	// Process diagnostics
 	const diagnostics = (result.diagnostics ?? []).map(String);
+	
+	// Enhanced error reporting
 	if (!result.result) {
-		throw new Error(diagnostics.join('\n') || 'Typst compilation failed (no diagnostics)');
+		const errorMessage = diagnostics.length > 0 
+			? diagnostics.join('\n')
+			: 'Typst compilation failed with no diagnostic information';
+		
+		console.error('[Typst] Compilation failed:', errorMessage);
+		throw new Error(errorMessage);
+	}
+
+	// Log warnings if present (even on successful compilation)
+	if (diagnostics.length > 0) {
+		console.warn('[Typst] Compilation warnings:', diagnostics.join('\n'));
 	}
 
 	return { pdf: result.result, diagnostics };
