@@ -21,6 +21,7 @@ export function usePdfRenderer({ pdfUrl, currentPage, zoom, isCollapsed, onPageC
 	const [isRendering, setIsRendering] = useState(false)
 	const [containerWidth, setContainerWidth] = useState(0)
 	const canvasRefs = useRef<Map<number, CanvasInfo>>(new Map())
+	const textLayerRefs = useRef<Map<number, HTMLDivElement>>(new Map())
 	const containerRef = useRef<HTMLDivElement | null>(null)
 	const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map())
 	const resizeObserverRef = useRef<ResizeObserver | null>(null)
@@ -128,6 +129,7 @@ export function usePdfRenderer({ pdfUrl, currentPage, zoom, isCollapsed, onPageC
 				for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
 					const page = await pdfDoc.getPage(pageNum) as PDFPageProxy
 					const canvasInfo = canvasRefs.current.get(pageNum)
+					const textLayerDiv = textLayerRefs.current.get(pageNum)
 					
 					if (!mounted || !canvasInfo) continue
 
@@ -150,6 +152,9 @@ export function usePdfRenderer({ pdfUrl, currentPage, zoom, isCollapsed, onPageC
 					// Render at higher resolution for crisp output
 					const outputScale = scale * pixelRatio
 					const scaledViewport = page.getViewport({ scale: outputScale })
+					
+					// Viewport for text layer (at display scale, not output scale)
+					const textLayerViewport = page.getViewport({ scale })
 
 					// Set canvas actual size (high resolution for crisp rendering)
 					canvas.width = scaledViewport.width
@@ -175,6 +180,30 @@ export function usePdfRenderer({ pdfUrl, currentPage, zoom, isCollapsed, onPageC
 						await renderTask.promise
 					}
 					canvasInfo.renderTask = null
+					
+					// Render text layer for text selection
+					if (textLayerDiv) {
+						// Clear previous text layer content
+						textLayerDiv.innerHTML = ''
+						textLayerDiv.style.width = `${scaledViewport.width / pixelRatio}px`
+						textLayerDiv.style.height = `${scaledViewport.height / pixelRatio}px`
+						
+						try {
+							const textContent = await page.getTextContent()
+							const pdfjs = await getPdfjs()
+							
+							// Create and render text layer using PDF.js TextLayer class
+							const textLayer = new pdfjs.TextLayer({
+								textContentSource: textContent,
+								container: textLayerDiv,
+								viewport: textLayerViewport
+							})
+							
+							await textLayer.render()
+						} catch (error) {
+							console.error('Failed to render text layer:', error)
+						}
+					}
 				}
 				
 				if (mounted) {
@@ -277,6 +306,7 @@ export function usePdfRenderer({ pdfUrl, currentPage, zoom, isCollapsed, onPageC
 		isRendering,
 		canvasRefs,
 		pageRefs,
+		textLayerRefs,
 		containerRef,
 		scrollToPage
 	}
