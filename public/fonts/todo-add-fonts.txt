@@ -1,0 +1,24 @@
+Get them from here:
+
+https://cdn.jsdelivr.net/gh/typst/typst-assets@0.11.0/files/fonts/
+
+FONTS:
+
+DejaVuSansMono.ttf 	332.73 KB
+DejaVuSansMono-Bold.ttf 	324.21 KB
+DejaVuSansMono-BoldOblique.ttf 	247.64 KB
+DejaVuSansMono-Oblique.ttf 	246.03 KB
+LinLibertine_R.ttf 	787.95 KB
+LinLibertine_RB.ttf 	731.05 KB
+LinLibertine_RBI.ttf 	521.03 KB
+LinLibertine_RI.ttf 	704.43 KB
+NewCM10-Bold.otf 	493.63 KB
+NewCM10-BoldItalic.otf 	445.81 KB
+NewCM10-Italic.otf 	460.5 KB
+NewCM10-Regular.otf 	560.52 KB
+NewCMMath-Book.otf 	1.19 MB
+NewCMMath-Regular.otf
+
+LATER ON:
+
+Add even more fonts.
