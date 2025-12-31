@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { downloadPdfFromUrl } from '@/lib/utils/helpers'
 import { TYPST_EXAMPLES, fetchExample } from '@/lib/typst/examples/TypstExamples'
 import type { Project } from '@/lib/storage/ProjectStorage'
@@ -27,6 +27,26 @@ export default function TypstEditor() {
 	const [showExamples, setShowExamples] = useState(false)
 	const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 	const [isPreviewCollapsed, setIsPreviewCollapsed] = useState(false)
+	const [isMobile, setIsMobile] = useState(false)
+	
+	// Mobile detection
+	useEffect(() => {
+		const mediaQuery = window.matchMedia('(max-width: 768px)')
+		
+		const handleMediaChange = (e: MediaQueryListEvent | MediaQueryList) => {
+			setIsMobile(e.matches)
+		}
+		
+		// Set initial value
+		handleMediaChange(mediaQuery)
+		
+		// Listen for changes
+		mediaQuery.addEventListener('change', handleMediaChange)
+		
+		return () => {
+			mediaQuery.removeEventListener('change', handleMediaChange)
+		}
+	}, [])
 	
 	// Compiler management
 	const { status, pdfUrl, errorMsg, hasCompiled, compileNow, compileDebounced } = useTypstCompiler()
@@ -178,7 +198,7 @@ export default function TypstEditor() {
 				</div>
 
 				{/* Sidebar Resize Handle */}
-				{!isSidebarCollapsed && (
+				{!isSidebarCollapsed && !isMobile && (
 					<ResizeHandle
 						isResizing={sidebarResize.isResizing}
 						onMouseDown={sidebarResize.startResize}
@@ -186,17 +206,20 @@ export default function TypstEditor() {
 				)}
 
 				{/* Editor + Preview Container - Takes remaining space */}
-				<div className="flex flex-1 min-w-0 overflow-hidden" id="editor-preview-container">
+				<div className={isMobile ? "flex flex-col flex-1 min-w-0 overflow-hidden" : "flex flex-1 min-w-0 overflow-hidden"} id="editor-preview-container">
 					{/* Code Editor */}
 					<div 
-						className={isPreviewCollapsed ? "flex-1 min-w-0" : "shrink-0"}
-						style={isPreviewCollapsed ? {
+						className={isMobile ? "flex-1 min-w-0" : (isPreviewCollapsed ? "flex-1 min-w-0" : "shrink-0")}
+						style={isMobile ? {
+							minHeight: '300px',
+							height: '50%'
+						} : (isPreviewCollapsed ? {
 							minWidth: `${EDITOR_MIN_WIDTH}px`,
 						} : { 
 							width: `${editorResize.value}px`,
 							minWidth: `${EDITOR_MIN_WIDTH}px`,
 							maxWidth: `${editorResize.value}px`,
-						}}
+						})}
 					>
 						<CodeEditor
 							filePath={activeFilePath}
@@ -206,7 +229,7 @@ export default function TypstEditor() {
 					</div>
 
 					{/* Editor/Preview Resize Handle */}
-					{!isPreviewCollapsed && (
+					{!isPreviewCollapsed && !isMobile && (
 						<ResizeHandle
 							isResizing={editorResize.isResizing}
 							onMouseDown={(e) => {
@@ -226,15 +249,18 @@ export default function TypstEditor() {
 
 					{/* PDF Preview - Takes remaining space */}
 					<div 
-						className={isPreviewCollapsed ? "shrink-0" : "flex-1 min-w-0"}
-						style={isPreviewCollapsed ? { 
+						className={isMobile ? "flex-1 min-w-0" : (isPreviewCollapsed ? "shrink-0" : "flex-1 min-w-0")}
+						style={isMobile ? {
+							minHeight: '300px',
+							height: '50%'
+						} : (isPreviewCollapsed ? { 
 							width: `${PREVIEW_COLLAPSED_WIDTH}px`,
 							minWidth: `${PREVIEW_COLLAPSED_WIDTH}px`,
 							maxWidth: `${PREVIEW_COLLAPSED_WIDTH}px`,
 							transition: 'width 0.2s ease-in-out'
 						} : {
 							minWidth: `${PREVIEW_MIN_WIDTH}px`,
-						}}
+						})}
 					>
 						<PdfPreview
 							pdfUrl={pdfUrl}

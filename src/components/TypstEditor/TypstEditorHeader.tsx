@@ -66,7 +66,7 @@ export default function TypstEditorHeader({
 	}
 
 	return (
-		<div className="flex justify-between items-center px-4 py-3 bg-gray-800 border-b border-gray-700">
+		<div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 px-4 py-3 bg-gray-800 border-b border-gray-700">
 			<div className="flex items-center gap-4">
 				<h1 className="text-xl font-semibold">Typst Online Editor</h1>
 				<div className="relative">
