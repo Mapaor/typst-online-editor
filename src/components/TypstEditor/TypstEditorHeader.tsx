@@ -9,6 +9,7 @@ interface TypstEditorHeaderProps {
 	hasCompiled: boolean
 	pdfUrl: string | null
 	showExamples: boolean
+	isMobile: boolean
 	onToggleExamples: () => void
 	onCompileNow: () => void
 	onDownload: () => void
@@ -20,6 +21,7 @@ export default function TypstEditorHeader({
 	hasCompiled,
 	pdfUrl,
 	showExamples,
+	isMobile,
 	onToggleExamples,
 	onCompileNow,
 	onDownload,
@@ -71,7 +73,7 @@ export default function TypstEditorHeader({
 				<h1 className="text-xl font-semibold">Typst Online Editor</h1>
 				<div className="relative">
 					<button
-						className="flex items-center gap-2 px-3 py-2 bg-gray-700 text-white rounded hover:bg-gray-600"
+						className={`flex items-center gap-2 px-3 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 ${isMobile ? 'text-xs' : ''}`}
 						onClick={onToggleExamples}
 					>
 						<FileText className="w-4 h-4" />
@@ -110,7 +112,7 @@ export default function TypstEditorHeader({
 					{getStatusText()}
 				</div>
 				<button
-					className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+					className={`px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed ${isMobile ? 'text-xs' : ''}`}
 					onClick={onCompileNow}
 					disabled={status === 'compiling'}
 				>
@@ -118,7 +120,7 @@ export default function TypstEditorHeader({
 				</button>
 				{pdfUrl && (
 					<button
-						className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+						className={`px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 ${isMobile ? 'text-xs' : ''}`}
 						onClick={onDownload}
 					>
 						Download PDF

@@ -169,6 +169,7 @@ export default function TypstEditor() {
 				hasCompiled={hasCompiled}
 				pdfUrl={pdfUrl}
 				showExamples={showExamples}
+				isMobile={isMobile}
 				onToggleExamples={() => setShowExamples(!showExamples)}
 				onCompileNow={handleCompileNow}
 				onDownload={handleDownload}
