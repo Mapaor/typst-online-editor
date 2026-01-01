@@ -6,7 +6,7 @@ Check it out here: [https://typst-online-editor.vercel.app](https://typst-online
 
 ## Tech used
 
-This website is built with NextJS (React), Typst.ts (Typst for the javascript world made by [@myriaddreamin](https://github.com/Myriad-Dreamin)) and PDF.js.
+This website is built with NextJS (React), Typst.ts (Typst for the javascript world made by [@myriaddreamin](https://github.com/Myriad-Dreamin)), PDF.js and Shiki.
 
 ## Great things about the website
 
