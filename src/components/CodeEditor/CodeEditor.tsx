@@ -20,7 +20,9 @@ export default function CodeEditor({ filePath, content, onChange }: CodeEditorPr
 	const isMarkdownFile = ['md', 'mdx'].includes(fileExtension)
 	const isJsonFile = fileExtension === 'json'
 	const isYamlFile = ['yaml', 'yml'].includes(fileExtension)
-	const needsHighlighting = isTypFile || isMarkdownFile || isJsonFile || isYamlFile
+	const isCsvFile = fileExtension === 'csv'
+	const isDatFile = fileExtension === 'dat' // We'll treat .dat files as .txt (plain text)
+	const needsHighlighting = isTypFile || isMarkdownFile || isJsonFile || isYamlFile || isCsvFile
 	
 	// Detect binary file types
 	const isImageFile = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExtension)
@@ -53,7 +55,8 @@ export default function CodeEditor({ filePath, content, onChange }: CodeEditorPr
 							},
 							bundledLanguages.markdown,
 							bundledLanguages.json,
-							bundledLanguages.yaml
+							bundledLanguages.yaml,
+							bundledLanguages.csv
 						],
 						themes: ['github-dark']
 					})
@@ -82,6 +85,7 @@ export default function CodeEditor({ filePath, content, onChange }: CodeEditorPr
 				if (isTypFile) lang = 'typst'
 				else if (isJsonFile) lang = 'json'
 				else if (isYamlFile) lang = 'yaml'
+				else if (isCsvFile) lang = 'csv'
 				
 				const html = highlighterRef.current.codeToHtml(content, {
 					lang,
