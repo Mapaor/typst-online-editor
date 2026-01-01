@@ -119,7 +119,7 @@ export default function TypstEditorHeader({
 						onLoadExample={onLoadExample}
 					/>
 					)}
-					{getStatusText()}
+					{(!isMobile || !hasCompiled) && getStatusText()}
 				</div>
 				{!isMobile && (
 					<button
