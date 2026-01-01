@@ -27,16 +27,16 @@ export default function LoadExamplesButton({
 				<ChevronDown className="w-4 h-4" />
 			</button>
 			{showExamples && (
-				<div className="absolute top-full left-0 mt-1 w-lg max-h-114 overflow-y-auto bg-gray-800 border border-gray-700 rounded shadow-lg z-50">
-					<div className="grid grid-cols-2">
+				<div className={`absolute top-full left-0 mt-1 ${isMobile ? 'w-64' : 'w-lg'} max-h-114 overflow-y-auto bg-gray-800 border border-gray-700 rounded shadow-lg z-50`}>
+					<div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
 						{TYPST_EXAMPLES.map((example) => (
 							<button
 								key={example.id}
-								className="w-full text-left px-4 py-3 hover:bg-gray-700 border-b border-gray-700 border-r last:border-r-0 odd:border-r"
+								className={`w-full text-left ${isMobile ? 'px-2 py-2' : 'px-4 py-3'} hover:bg-gray-700 border-b border-gray-700 border-r last:border-r-0 odd:border-r`}
 								onClick={() => onLoadExample(example.id)}
 							>
-								<div className="font-medium">{example.name}</div>
-								<div className="text-sm text-gray-400">{example.description}</div>
+								<div className={`font-medium ${isMobile ? 'text-xs' : ''}`}>{example.name}</div>
+								<div className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-400`}>{example.description}</div>
 							</button>
 						))}
 					</div>
