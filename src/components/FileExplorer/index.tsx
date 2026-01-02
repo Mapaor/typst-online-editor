@@ -15,7 +15,7 @@ import FolderTreeItem from './components/FolderTreeItem'
 import FileTreeItem from './components/FileTreeItem'
 
 
-const ALLOWED_EXTENSIONS = ['.typ', '.txt', '.md', '.mdx','.png', '.jpg', '.jpeg', '.svg', '.json', '.csv', '.dat', '.yml', '.yaml', '.ttf', '.otf']
+const ALLOWED_EXTENSIONS = ['.typ', '.txt', '.md', '.mdx','.png', '.jpg', '.jpeg', '.svg', '.json', '.csv', '.dat', '.yml', '.yaml', '.toml', '.ttf', '.otf']
 
 export default function FileExplorer({
 	project,
